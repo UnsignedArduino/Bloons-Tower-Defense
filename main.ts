@@ -2,6 +2,7 @@ namespace SpriteKind {
     export const DirectionDown = SpriteKind.create()
     export const DirectionLeft = SpriteKind.create()
     export const DirectionRight = SpriteKind.create()
+    export const End = SpriteKind.create()
 }
 namespace myTiles {
     //% blockIdentity=images._tile
@@ -181,11 +182,17 @@ function ScreenSay (Text: string) {
     OnScreenNarrator.vx = 50
     OnScreenNarrator.say(Text)
 }
+sprites.onOverlap(SpriteKind.Enemy, SpriteKind.DirectionDown, function (sprite, otherSprite) {
+    sprite.setVelocity(0, 15 * (Wave * 1.1))
+})
+sprites.onOverlap(SpriteKind.Enemy, SpriteKind.DirectionRight, function (sprite, otherSprite) {
+    sprite.setVelocity(15 * (Wave * 1.1), 0)
+})
 info.onCountdownEnd(function () {
     if (Waiting) {
         Waiting = false
         timer.after(500, function () {
-            info.startCountdown(15 * Wave)
+            info.startCountdown(10 * Wave)
             ScreenSay("Start of wave " + Wave)
         })
     } else {
@@ -196,6 +203,14 @@ info.onCountdownEnd(function () {
             info.startCountdown(15)
         })
     }
+})
+sprites.onOverlap(SpriteKind.Enemy, SpriteKind.End, function (sprite, otherSprite) {
+    sprite.destroy()
+    info.changeLifeBy(-2)
+    scene.cameraShake(4, 500)
+})
+sprites.onOverlap(SpriteKind.Enemy, SpriteKind.DirectionLeft, function (sprite, otherSprite) {
+    sprite.setVelocity(15 * (Wave * 1.1) * -1, 0)
 })
 let Wave = 0
 let Waiting = false
@@ -377,6 +392,51 @@ Lefts.push(sprites.create(img`
 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
 `, SpriteKind.DirectionLeft))
 Lefts[1].setPosition(225, 230)
+for (let Value of Downs) {
+    Value.setFlag(SpriteFlag.Invisible, true)
+}
+for (let Value of Lefts) {
+    Value.setFlag(SpriteFlag.Invisible, true)
+}
+for (let Value of Rights) {
+    Value.setFlag(SpriteFlag.Invisible, true)
+}
+let EndOfMap = sprites.create(img`
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+3 3 3 3 3 3 3 3 
+`, SpriteKind.End)
+EndOfMap.setPosition(4, 227)
+EndOfMap.setFlag(SpriteFlag.Invisible, true)
 scene.setBackgroundColor(7)
 tiles.setTilemap(tiles.createTilemap(
             hex`1000100012050401011401011301011201010101010502030303030303030303030308140106070707070707070707070702040113010101011201140101140101050401010a03030303030303030303030204120105020707070707070707070707090112050414010101130101010112010101010504010d0e0e0e0e0e0e0e0e0e0f13010504010c111111111111111111100114050413010101010101011401010112010502030303030303030303030308010106070707070707070707070702041401120101140101120101010113050413030303030303030303030303030204010707070707070707070707070707090101140101121401010101130101010112`,
@@ -402,10 +462,42 @@ tiles.setTilemap(tiles.createTilemap(
             TileScale.Sixteen
         ))
 info.setLife(100)
-info.setScore(100)
+info.setScore(75)
 Waiting = true
 Wave = 1
 info.startCountdown(15)
+game.onUpdateInterval(100, function () {
+    if (!(Waiting)) {
+        timer.throttle("spawn bloon", 500 - Wave * 10, function () {
+            Bloons.push(sprites.create(img`
+. . . . . . 2 2 2 . . . . . . . 
+. . . . . 2 2 2 2 2 . . . . . . 
+. . . . 2 2 2 2 2 2 2 . . . . . 
+. . . . 2 2 2 2 2 2 2 . . . . . 
+. . . . 2 2 2 2 2 2 2 . . . . . 
+. . . . 2 2 2 2 2 2 2 . . . . . 
+. . . . 2 2 2 2 2 2 2 . . . . . 
+. . . . . 2 2 2 2 2 . . . . . . 
+. . . . . . 2 2 2 . . . . . . . 
+. . . . . . . f . . . . . . . . 
+. . . . . . . f . . . . . . . . 
+. . . . . . . . f . . . . . . . 
+. . . . . . . . f . . . . . . . 
+. . . . . . . f . . . . . . . . 
+. . . . . . . f . . . . . . . . 
+. . . . . . . f . . . . . . . . 
+`, SpriteKind.Enemy))
+            Bloons[Bloons.length - 1].setPosition(32, 0)
+            Bloons[Bloons.length - 1].setVelocity(0, 15 * (Wave * 1.1))
+        })
+    }
+    if (Wave >= 20) {
+        game.over(true)
+    }
+})
+game.onUpdateInterval(5000, function () {
+    info.changeScoreBy(25)
+})
 forever(function () {
     OnScreenNarrator.y = scene.screenHeight() / 2 + scene.cameraTop()
 })
