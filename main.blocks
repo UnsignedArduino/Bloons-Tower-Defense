@@ -1,0 +1,38 @@
+<xml xmlns="https://developers.google.com/blockly/xml"><variables><variable type="KIND_SpriteKind" id="SY|3E,3aJQwhqr.HKr/I">Player</variable><variable type="KIND_SpriteKind" id="wCaClm0?L5()wS)i-S{#">Projectile</variable><variable type="KIND_SpriteKind" id="9C@94uattezZ^9BU_F][">Food</variable><variable type="KIND_SpriteKind" id="}Kwk3Q+25;83%IDUnoHc">Enemy</variable><variable id="a:l|hy+T[AOzW]gD*6a4">Cursor</variable><variable type="BLOCKLY_TILESET_TYPE" id="[kNr}+qFTINPj2KNgc]%">0;16;16;0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000</variable><variable type="BLOCKLY_TILESET_TYPE" id="`,@|OzCvd!g/I{TUuu[h">1;16;16;7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777</variable><variable type="BLOCKLY_TILESET_TYPE" id="2LFrb=W}kLgNe8WEnRBt">2;16;16;9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999</variable><variable type="BLOCKLY_TILESET_TYPE" id=".`w:{Uh9;/%d`5pzOG/P">3;16;16;9799999999999999779999999999999977999999999999997799999999999999979999999999999997999999999999997799999999999999779999999999999977999999999999997799999999999999779999999999999997999999999999999799999999999999779999999999999977979977779977777777777777777777</variable><variable type="BLOCKLY_TILESET_TYPE" id="HS1QK3BKN6mt]K?8P2Zf">4;16;16;7777777777777777777777779977779777999999999999997799999999999999779999999999999997999999999999999799999999999999979999999999999997999999999999999799999999999999779999999999999977999999999999997799999999999999779999999999999977999999999999999799999999999999</variable><variable type="BLOCKLY_TILESET_TYPE" id="iQC+iJVzFi!8C^8M0a1X">5;16;16;7777777777777777777799997777997779979999999799999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999</variable><variable type="BLOCKLY_TILESET_TYPE" id="K:iRztyh8x[3ybYvf$1*">7;16;16;7777777777777777997777777777977799999999999999779999999999999979999999999999997999999999999999799999999999999979999999999999997999999999999999779999999999999977999999999999997799999999999999779999999999999977999999999999997999999999999999799999999999999977</variable><variable type="BLOCKLY_TILESET_TYPE" id="}xC]dNjv,8zAGDKt6(),">8;16;16;9999999999999977999999999999997999999999999999799999999999999979999999999999997799999999999999779999999999999979999999999999997999999999999999799999999999999979999999999999997999999999999999799999999999999979999999999999997779777799797797777777777777777777</variable><variable type="BLOCKLY_TILESET_TYPE" id="ZSG;Y!|YfhH1@aojINpX">9;16;16;9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999979977979999999977797777999977777777777777777777</variable></variables><block type="pxt-on-start" x="0" y="0"><statement name="HANDLER"><block type="variables_set"><field name="VAR" id="a:l|hy+T[AOzW]gD*6a4">Cursor</field><value name="VALUE"><shadow xmlns="http://www.w3.org/1999/xhtml" type="math_number"><field name="NUM">0</field></shadow><block type="spritescreate"><value name="img"><shadow type="screen_image_picker"><field name="img">img`
+f f . . . . . . . 
+f 1 f . . . . . . 
+f 1 1 f . . . . . 
+f 1 1 1 f . . . . 
+f 1 1 1 1 f . . . 
+f 1 1 1 1 1 f . . 
+f 1 1 1 1 1 1 f . 
+f 1 1 1 1 f f f f 
+f 1 f f 1 f . . . 
+f f . . f 1 f . . 
+f . . . f 1 f . . 
+. . . . . f 1 f . 
+. . . . . f 1 f . 
+. . . . . . f . . 
+`</field></shadow></value><value name="kind"><shadow type="spritekind"><field name="MEMBER">Player</field></shadow></value></block></value><next><block type="spritesetsetflag"><field name="flag">SpriteFlag.StayInScreen</field><value name="sprite"><block type="variables_get"><field name="VAR" id="a:l|hy+T[AOzW]gD*6a4">Cursor</field></block></value><value name="on"><shadow type="toggleOnOff"><field name="on">true</field></shadow></value><next><block type="game_control_sprite"><mutation xmlns="http://www.w3.org/1999/xhtml" _expanded="2" _input_init="true"></mutation><value name="sprite"><block type="variables_get"><field name="VAR" id="a:l|hy+T[AOzW]gD*6a4">Cursor</field></block></value><value name="vx"><shadow type="math_number"><field name="NUM">100</field></shadow></value><value name="vy"><shadow type="math_number"><field name="NUM">100</field></shadow></value><next><block type="camerafollow"><value name="sprite"><block type="variables_get"><field name="VAR" id="a:l|hy+T[AOzW]gD*6a4">Cursor</field></block></value><next><block type="gamesetbackgroundcolor"><value name="color"><shadow type="colorindexpicker"><field name="index">7</field></shadow></value><next><block type="tilemap_editor"><field name="tilemap">tiles.createTilemap(
+            hex`1000100012050401011401011301011201010101010502030303030303030303030308140106070707070707070707070702040113010101011201140101140101050401010a03030303030303030303030204120105020707070707070707070702040112050414010101130101010112050401010504010d0e0e0e0e0e0e0f01050413010504010c111111111111100105040114050413010101010101011401050412010502030303030303030303030204010106070707070707070707070702041401120101140101120101010113050413030303030303030303030303030204010707070707070707070707070707090101140101121401010101130101010112`,
+            img`
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+`,
+            [myTiles.tile0,myTiles.tile1,sprites.castle.tilePath5,sprites.castle.tilePath2,sprites.castle.tilePath6,sprites.castle.tilePath4,sprites.castle.tilePath7,sprites.castle.tilePath8,sprites.castle.tilePath3,sprites.castle.tilePath9,sprites.castle.tilePath1,myTiles.tile2,myTiles.tile3,myTiles.tile4,myTiles.tile5,myTiles.tile7,myTiles.tile8,myTiles.tile9,sprites.castle.tileGrass1,sprites.castle.tileGrass3,sprites.castle.tileGrass2],
+            TileScale.Sixteen
+        )</field></block></next></block></next></block></next></block></next></block></next></block></statement></block></xml>
