@@ -306,30 +306,29 @@ let Towers: Sprite[] = []
 let OnScreenNarrator: Sprite = null
 let Cursor: Sprite = null
 Cursor = sprites.create(img`
-f f . . . . . . . 
-f 1 f . . . . . . 
-f 1 1 f . . . . . 
-f 1 1 1 f . . . . 
-f 1 1 1 1 f . . . 
-f 1 1 1 1 1 f . . 
-f 1 1 1 1 1 1 f . 
-f 1 1 1 1 f f f f 
-f 1 f f 1 f . . . 
-f f . . f 1 f . . 
-f . . . f 1 f . . 
-. . . . . f 1 f . 
-. . . . . f 1 f . 
-. . . . . . f . . 
+f f . . . . . . 
+f 1 f . . . . . 
+f 1 1 f . . . . 
+f 1 1 1 f . . . 
+f 1 1 1 1 f . . 
+f 1 1 1 1 1 f . 
+f 1 1 1 1 f f f 
+f 1 f f 1 f . . 
+f f . f 1 f . . 
+f . . . f 1 f . 
+. . . . f 1 f . 
+. . . . . f 1 f 
+. . . . . f 1 f 
+. . . . . . f . 
 `, SpriteKind.Player)
 Cursor.setFlag(SpriteFlag.StayInScreen, true)
-Cursor.setFlag(SpriteFlag.ShowPhysics, true)
+Cursor.setFlag(SpriteFlag.ShowPhysics, false)
 controller.moveSprite(Cursor, 100, 100)
 scene.cameraFollowSprite(Cursor)
 OnScreenNarrator = sprites.create(img`
 . 
 `, SpriteKind.Player)
 OnScreenNarrator.setFlag(SpriteFlag.RelativeToCamera, true)
-let Bloons = sprites.allOfKind(SpriteKind.Enemy)
 Towers = sprites.allOfKind(SpriteKind.Tower)
 let Downs = sprites.allOfKind(SpriteKind.DirectionDown)
 let Lefts = sprites.allOfKind(SpriteKind.DirectionLeft)
@@ -576,10 +575,10 @@ MonkeyFlipped.flipX()
 Waiting = true
 Wave = 1
 info.startCountdown(15)
-game.onUpdateInterval(100, function () {
+game.onUpdate(function () {
     if (!(Waiting)) {
         timer.throttle("spawn bloon", 1000 - (Wave - 1) * 10, function () {
-            Bloons.push(sprites.create(img`
+            LastBloon = sprites.create(img`
 . . . . . . 2 2 2 . . . . . . . 
 . . . . . 2 2 2 2 2 . . . . . . 
 . . . . 2 2 2 2 2 2 2 . . . . . 
@@ -596,8 +595,7 @@ game.onUpdateInterval(100, function () {
 . . . . . . . f . . . . . . . . 
 . . . . . . . f . . . . . . . . 
 . . . . . . . f . . . . . . . . 
-`, SpriteKind.Enemy))
-            LastBloon = Bloons[Bloons.length - 1]
+`, SpriteKind.Enemy)
             sprites.setDataNumber(LastBloon, "wave spawned on", Wave)
             LastBloon.setPosition(32, 0)
             LastBloon.setVelocity(0, 15 * (sprites.readDataNumber(LastBloon, "wave spawned on") * 1.1))
