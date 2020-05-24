@@ -226,7 +226,7 @@ c c c c c d d d e e f c . f e f
                     if (sprites.readDataNumber(Value, "Direction") == 1) {
                         Value.setImage(MonkeyFlipped)
                     }
-                    if (sprites.readDataNumber(Value, "Direction") == 4) {
+                    if (sprites.readDataNumber(Value, "Direction") == 3) {
                         Value.setImage(img`
 . . . . f f f f f . . . . . . . 
 . . . f e e e e e f . . . . . . 
@@ -280,7 +280,7 @@ info.onCountdownEnd(function () {
 })
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.End, function (sprite, otherSprite) {
     sprite.destroy()
-    if (false) {
+    if (true) {
         info.changeLifeBy(-2)
     }
     scene.cameraShake(4, 500)
