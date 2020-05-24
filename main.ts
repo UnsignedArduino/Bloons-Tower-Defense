@@ -185,6 +185,7 @@ function ScreenSay (Text: string) {
 }
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Projectile, function (sprite, otherSprite) {
     sprite.destroy()
+    otherSprite.destroy()
     info.changeScoreBy(1)
 })
 controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
