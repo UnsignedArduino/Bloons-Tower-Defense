@@ -183,13 +183,17 @@ function ScreenSay (Text: string) {
     OnScreenNarrator.vx = 50
     OnScreenNarrator.say(Text)
 }
+sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Projectile, function (sprite, otherSprite) {
+    sprite.destroy()
+    info.changeScoreBy(1)
+})
 controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
-    if (info.score() >= 50) {
-        if (Cursor.tileKindAt(TileDirection.Center, myTiles.tile1) || Cursor.tileKindAt(TileDirection.Center, sprites.castle.tileGrass1) || (Cursor.tileKindAt(TileDirection.Center, sprites.castle.tileGrass3) || Cursor.tileKindAt(TileDirection.Center, sprites.castle.tileGrass2))) {
-            for (let Value of Towers) {
-                Condition = Cursor.overlapsWith(Value)
-            }
-            if (!(Condition)) {
+    if (Cursor.tileKindAt(TileDirection.Center, myTiles.tile1) || Cursor.tileKindAt(TileDirection.Center, sprites.castle.tileGrass1) || (Cursor.tileKindAt(TileDirection.Center, sprites.castle.tileGrass3) || Cursor.tileKindAt(TileDirection.Center, sprites.castle.tileGrass2))) {
+        for (let Value of Towers) {
+            Overlap = Cursor.overlapsWith(Value)
+        }
+        if (!(Overlap)) {
+            if (info.score() >= 50) {
                 info.changeScoreBy(-50)
                 Towers.push(sprites.create(img`
 . . . . f f f f f . . . . . . . 
@@ -211,14 +215,45 @@ c c c c c d d d e e f c . f e f
 `, SpriteKind.Tower))
                 LastTower = Towers[Towers.length - 1]
                 LastTower.setPosition(Cursor.x, Cursor.y)
+                sprites.setDataNumber(LastTower, "Direction", 0)
             } else {
-                Cursor.say("Not a valid spot!", 1000)
+                Cursor.say("No money left!", 1000)
             }
         } else {
-            Cursor.say("Not a valid spot!", 1000)
+            for (let Value of Towers) {
+                if (Cursor.overlapsWith(Value)) {
+                    sprites.changeDataNumberBy(Value, "Direction", 1)
+                    if (sprites.readDataNumber(Value, "Direction") == 1) {
+                        Value.setImage(MonkeyFlipped)
+                    }
+                    if (sprites.readDataNumber(Value, "Direction") == 4) {
+                        Value.setImage(img`
+. . . . f f f f f . . . . . . . 
+. . . f e e e e e f . . . . . . 
+. . f d d d d e e e f . . . . . 
+. c d f d d f d e e f f . . . . 
+. c d f d d f d e e d d f . . . 
+c d e e d d d d e e b d c . . . 
+c d d d d c d d e e b d c . f f 
+c c c c c d d d e e f c . f e f 
+. f d d d d d e e f f . . f e f 
+. . f f f f f e e e e f . f e f 
+. . . . f e e e e e e e f f e f 
+. . . f e f f e f e e e e f f . 
+. . . f e f f e f e e e e f . . 
+. . . f d b f d b f f e f . . . 
+. . . f d d c d d b b d f . . . 
+. . . . f f f f f f f f f . . . 
+`)
+                    }
+                    if (sprites.readDataNumber(Value, "Direction") >= 4) {
+                        sprites.setDataNumber(Value, "Direction", 0)
+                    }
+                }
+            }
         }
     } else {
-        Cursor.say("No money left!", 1000)
+        Cursor.say("Not a valid spot!", 1000)
     }
 })
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.DirectionDown, function (sprite, otherSprite) {
@@ -259,11 +294,13 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Tower, function (sprite, otherSp
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.DirectionLeft, function (sprite, otherSprite) {
     sprite.setVelocity(15 * (sprites.readDataNumber(sprite, "wave spawned on") * 1.1) * -1, 0)
 })
+let Dart: Sprite = null
 let LastBloon: Sprite = null
 let LastTower: Sprite = null
-let Condition = false
+let Overlap = false
 let Wave = 0
 let Waiting = false
+let MonkeyFlipped: Image = null
 let Towers: Sprite[] = []
 let OnScreenNarrator: Sprite = null
 let Cursor: Sprite = null
@@ -516,6 +553,25 @@ tiles.setTilemap(tiles.createTilemap(
         ))
 info.setLife(100)
 info.setScore(75)
+MonkeyFlipped = img`
+. . . . f f f f f . . . . . . . 
+. . . f e e e e e f . . . . . . 
+. . f d d d d e e e f . . . . . 
+. c d f d d f d e e f f . . . . 
+. c d f d d f d e e d d f . . . 
+c d e e d d d d e e b d c . . . 
+c d d d d c d d e e b d c . f f 
+c c c c c d d d e e f c . f e f 
+. f d d d d d e e f f . . f e f 
+. . f f f f f e e e e f . f e f 
+. . . . f e e e e e e e f f e f 
+. . . f e f f e f e e e e f f . 
+. . . f e f f e f e e e e f . . 
+. . . f d b f d b f f e f . . . 
+. . . f d d c d d b b d f . . . 
+. . . . f f f f f f f f f . . . 
+`
+MonkeyFlipped.flipX()
 Waiting = true
 Wave = 1
 info.startCountdown(15)
@@ -545,6 +601,53 @@ game.onUpdateInterval(100, function () {
             LastBloon.setPosition(32, 0)
             LastBloon.setVelocity(0, 15 * (sprites.readDataNumber(LastBloon, "wave spawned on") * 1.1))
         })
+    }
+})
+game.onUpdateInterval(500, function () {
+    for (let Value of Towers) {
+        if (sprites.readDataNumber(Value, "Direction") == 0) {
+            Dart = sprites.createProjectileFromSprite(img`
+. . f . . 
+. . f . . 
+. . f . . 
+. . f . . 
+. . f . . 
+. . f . . 
+. 2 2 2 . 
+2 2 2 2 2 
+2 2 . 2 2 
+2 . . . 2 
+`, Value, 0, -100)
+        } else if (sprites.readDataNumber(Value, "Direction") == 1) {
+            Dart = sprites.createProjectileFromSprite(img`
+2 2 2 . . . . . . . 
+. 2 2 2 . . . . . . 
+. . 2 2 f f f f f f 
+. 2 2 2 . . . . . . 
+2 2 2 . . . . . . . 
+`, Value, 100, 0)
+        } else if (sprites.readDataNumber(Value, "Direction") == 2) {
+            Dart = sprites.createProjectileFromSprite(img`
+2 . . . 2 
+2 2 . 2 2 
+2 2 2 2 2 
+. 2 2 2 . 
+. . f . . 
+. . f . . 
+. . f . . 
+. . f . . 
+. . f . . 
+. . f . . 
+`, Value, 0, 100)
+        } else {
+            Dart = sprites.createProjectileFromSprite(img`
+. . . . . . . 2 2 2 
+. . . . . . 2 2 2 . 
+f f f f f f 2 2 . . 
+. . . . . . 2 2 2 . 
+. . . . . . . 2 2 2 
+`, Value, -100, 0)
+        }
     }
 })
 game.onUpdateInterval(5000, function () {
