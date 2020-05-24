@@ -250,6 +250,12 @@ sprites.onOverlap(SpriteKind.Enemy, SpriteKind.End, function (sprite, otherSprit
     }
     scene.cameraShake(4, 500)
 })
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Tower, function (sprite, otherSprite) {
+    if (controller.B.isPressed()) {
+        Towers.removeAt(Towers.indexOf(otherSprite)).destroy()
+        info.changeScoreBy(30)
+    }
+})
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.DirectionLeft, function (sprite, otherSprite) {
     sprite.setVelocity(15 * (sprites.readDataNumber(sprite, "wave spawned on") * 1.1) * -1, 0)
 })
