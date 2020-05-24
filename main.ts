@@ -270,11 +270,13 @@ info.onCountdownEnd(function () {
             info.startCountdown(10 * Wave)
             ScreenSay("Start of wave " + Wave)
         })
+        console.logValue("wave", Wave)
+        BloonsSpawned = 0
     } else {
         Waiting = true
         ScreenSay("End of wave " + Wave)
-        Wave += 1
         timer.after(500, function () {
+            Wave += 1
             info.startCountdown(15)
         })
     }
@@ -299,6 +301,7 @@ let Dart: Sprite = null
 let LastBloon: Sprite = null
 let LastTower: Sprite = null
 let Overlap = false
+let BloonsSpawned = 0
 let Wave = 0
 let Waiting = false
 let MonkeyFlipped: Image = null
@@ -574,11 +577,14 @@ c c c c c d d d e e f c . f e f
 MonkeyFlipped.flipX()
 Waiting = true
 Wave = 1
+BloonsSpawned = 0
 info.startCountdown(15)
 game.onUpdate(function () {
     if (!(Waiting)) {
-        timer.throttle("spawn bloon", 1000 - (Wave - 1) * 10, function () {
-            LastBloon = sprites.create(img`
+        timer.throttle("spawn bloon", 1000 - (Wave - 1) * 25, function () {
+            for (let Index = 0; Index <= Wave; Index++) {
+                timer.after((1000 - (Wave - 1) * 25) / Wave * Index, function () {
+                    LastBloon = sprites.create(img`
 . . . . . . 2 2 2 . . . . . . . 
 . . . . . 2 2 2 2 2 . . . . . . 
 . . . . 2 2 2 2 2 2 2 . . . . . 
@@ -596,9 +602,13 @@ game.onUpdate(function () {
 . . . . . . . f . . . . . . . . 
 . . . . . . . f . . . . . . . . 
 `, SpriteKind.Enemy)
-            sprites.setDataNumber(LastBloon, "wave spawned on", Wave)
-            LastBloon.setPosition(32, 0)
-            LastBloon.setVelocity(0, 15 * (sprites.readDataNumber(LastBloon, "wave spawned on") * 1.1))
+                    sprites.setDataNumber(LastBloon, "wave spawned on", Wave)
+                    LastBloon.setPosition(32, 0)
+                    LastBloon.setVelocity(0, 15 * (sprites.readDataNumber(LastBloon, "wave spawned on") * 1.1))
+                    BloonsSpawned += 1
+                })
+            }
+            console.logValue("bloons spawned", BloonsSpawned)
         })
     }
 })

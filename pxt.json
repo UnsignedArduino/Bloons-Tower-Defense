@@ -1,5 +1,5 @@
 {
-    "name": "Bloons Tower Defense v1.2",
+    "name": "Bloons Tower Defense v1.3",
     "dependencies": {
         "device": "*",
         "Timers": "github:darzu/arcade-timers#v1.0.0",
