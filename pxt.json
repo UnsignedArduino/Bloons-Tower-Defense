@@ -2,7 +2,8 @@
     "name": "Bloons Tower Defense",
     "dependencies": {
         "device": "*",
-        "Timers": "github:darzu/arcade-timers#v1.0.0"
+        "Timers": "github:darzu/arcade-timers#v1.0.0",
+        "arcade-sprite-data": "github:microsoft/arcade-sprite-data#v0.0.5"
     },
     "description": "",
     "files": [
