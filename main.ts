@@ -184,6 +184,7 @@ function ScreenSay (Text: string) {
     OnScreenNarrator.say(Text)
 }
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Projectile, function (sprite, otherSprite) {
+    Dump = Bloons.removeAt(Bloons.indexOf(sprite))
     sprite.destroy()
     otherSprite.destroy()
     info.changeScoreBy(1)
@@ -196,7 +197,7 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
         if (!(Overlap)) {
             if (info.score() >= 50) {
                 info.changeScoreBy(-50)
-                Towers.push(sprites.create(img`
+                LastTower = sprites.create(img`
 . . . . f f f f f . . . . . . . 
 . . . f e e e e e f . . . . . . 
 . . f d d d d e e e f . . . . . 
@@ -213,55 +214,26 @@ c c c c c d d d e e f c . f e f
 . . . f d b f d b f f e f . . . 
 . . . f d d c d d b b d f . . . 
 . . . . f f f f f f f f f . . . 
-`, SpriteKind.Tower))
-                LastTower = Towers[Towers.length - 1]
+`, SpriteKind.Tower)
+                Towers.push(LastTower)
                 LastTower.setPosition(Cursor.x, Cursor.y)
-                sprites.setDataNumber(LastTower, "Direction", 0)
+                LastTower.z = 0
             } else {
                 Cursor.say("No money left!", 1000)
-            }
-        } else {
-            for (let Value of Towers) {
-                if (Cursor.overlapsWith(Value)) {
-                    sprites.changeDataNumberBy(Value, "Direction", 1)
-                    if (sprites.readDataNumber(Value, "Direction") == 1) {
-                        Value.setImage(MonkeyFlipped)
-                    }
-                    if (sprites.readDataNumber(Value, "Direction") == 3) {
-                        Value.setImage(img`
-. . . . f f f f f . . . . . . . 
-. . . f e e e e e f . . . . . . 
-. . f d d d d e e e f . . . . . 
-. c d f d d f d e e f f . . . . 
-. c d f d d f d e e d d f . . . 
-c d e e d d d d e e b d c . . . 
-c d d d d c d d e e b d c . f f 
-c c c c c d d d e e f c . f e f 
-. f d d d d d e e f f . . f e f 
-. . f f f f f e e e e f . f e f 
-. . . . f e e e e e e e f f e f 
-. . . f e f f e f e e e e f f . 
-. . . f e f f e f e e e e f . . 
-. . . f d b f d b f f e f . . . 
-. . . f d d c d d b b d f . . . 
-. . . . f f f f f f f f f . . . 
-`)
-                    }
-                    if (sprites.readDataNumber(Value, "Direction") >= 4) {
-                        sprites.setDataNumber(Value, "Direction", 0)
-                    }
-                }
             }
         }
     } else {
         Cursor.say("Not a valid spot!", 1000)
     }
 })
+scene.onHitWall(SpriteKind.Projectile, function (sprite) {
+    sprite.destroy()
+})
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.DirectionDown, function (sprite, otherSprite) {
-    sprite.setVelocity(0, 15 * (sprites.readDataNumber(sprite, "wave spawned on") * 1.1))
+    sprite.setVelocity(0, 15 * sprites.readDataNumber(sprite, "wave spawned on"))
 })
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.DirectionRight, function (sprite, otherSprite) {
-    sprite.setVelocity(15 * (sprites.readDataNumber(sprite, "wave spawned on") * 1.1), 0)
+    sprite.setVelocity(15 * sprites.readDataNumber(sprite, "wave spawned on"), 0)
 })
 info.onCountdownEnd(function () {
     if (Waiting) {
@@ -295,16 +267,20 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Tower, function (sprite, otherSp
     }
 })
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.DirectionLeft, function (sprite, otherSprite) {
-    sprite.setVelocity(15 * (sprites.readDataNumber(sprite, "wave spawned on") * 1.1) * -1, 0)
+    sprite.setVelocity(15 * sprites.readDataNumber(sprite, "wave spawned on") * -1, 0)
 })
 let Dart: Sprite = null
+let ClosestBloon: Sprite = null
+let Distance = 0
+let ClosestDistance = 0
 let LastBloon: Sprite = null
 let LastTower: Sprite = null
 let Overlap = false
+let Dump: Sprite = null
 let BloonsSpawned = 0
 let Wave = 0
 let Waiting = false
-let MonkeyFlipped: Image = null
+let Bloons: Sprite[] = []
 let Towers: Sprite[] = []
 let OnScreenNarrator: Sprite = null
 let Cursor: Sprite = null
@@ -326,6 +302,7 @@ f . . . f 1 f .
 `, SpriteKind.Player)
 Cursor.setFlag(SpriteFlag.StayInScreen, true)
 Cursor.setFlag(SpriteFlag.ShowPhysics, false)
+Cursor.z = 10000
 controller.moveSprite(Cursor, 100, 100)
 scene.cameraFollowSprite(Cursor)
 OnScreenNarrator = sprites.create(img`
@@ -333,6 +310,7 @@ OnScreenNarrator = sprites.create(img`
 `, SpriteKind.Player)
 OnScreenNarrator.setFlag(SpriteFlag.RelativeToCamera, true)
 Towers = sprites.allOfKind(SpriteKind.Tower)
+Bloons = sprites.allOfKind(SpriteKind.Enemy)
 let Downs = sprites.allOfKind(SpriteKind.DirectionDown)
 let Lefts = sprites.allOfKind(SpriteKind.DirectionLeft)
 let Rights = sprites.allOfKind(SpriteKind.DirectionRight)
@@ -555,8 +533,8 @@ tiles.setTilemap(tiles.createTilemap(
             TileScale.Sixteen
         ))
 info.setLife(100)
-info.setScore(75)
-MonkeyFlipped = img`
+info.setScore(100)
+let MonkeyFlipped = img`
 . . . . f f f f f . . . . . . . 
 . . . f e e e e e f . . . . . . 
 . . f d d d d e e e f . . . . . 
@@ -602,9 +580,10 @@ game.onUpdate(function () {
 . . . . . . . f . . . . . . . . 
 . . . . . . . f . . . . . . . . 
 `, SpriteKind.Enemy)
-                    sprites.setDataNumber(LastBloon, "wave spawned on", Wave)
+                    Bloons.push(LastBloon)
+                    sprites.setDataNumber(LastBloon, "wave spawned on", Math.min(Wave, 6 + 2 / 3))
                     LastBloon.setPosition(32, 0)
-                    LastBloon.setVelocity(0, 15 * (sprites.readDataNumber(LastBloon, "wave spawned on") * 1.1))
+                    LastBloon.setVelocity(0, 15 * sprites.readDataNumber(LastBloon, "wave spawned on"))
                     BloonsSpawned += 1
                 })
             }
@@ -614,48 +593,23 @@ game.onUpdate(function () {
 })
 game.onUpdateInterval(500, function () {
     for (let Value of Towers) {
-        if (sprites.readDataNumber(Value, "Direction") == 0) {
-            Dart = sprites.createProjectileFromSprite(img`
-. . f . . 
-. . f . . 
-. . f . . 
-. . f . . 
-. . f . . 
-. . f . . 
-. 2 2 2 . 
-2 2 2 2 2 
-2 2 . 2 2 
-2 . . . 2 
-`, Value, 0, -100)
-        } else if (sprites.readDataNumber(Value, "Direction") == 1) {
-            Dart = sprites.createProjectileFromSprite(img`
-2 2 2 . . . . . . . 
-. 2 2 2 . . . . . . 
-. . 2 2 f f f f f f 
-. 2 2 2 . . . . . . 
-2 2 2 . . . . . . . 
-`, Value, 100, 0)
-        } else if (sprites.readDataNumber(Value, "Direction") == 2) {
-            Dart = sprites.createProjectileFromSprite(img`
-2 . . . 2 
-2 2 . 2 2 
-2 2 2 2 2 
-. 2 2 2 . 
-. . f . . 
-. . f . . 
-. . f . . 
-. . f . . 
-. . f . . 
-. . f . . 
-`, Value, 0, 100)
-        } else {
-            Dart = sprites.createProjectileFromSprite(img`
-. . . . . . . 2 2 2 
-. . . . . . 2 2 2 . 
-f f f f f f 2 2 . . 
-. . . . . . 2 2 2 . 
-. . . . . . . 2 2 2 
-`, Value, -100, 0)
+        if (Bloons.length > 0) {
+            ClosestDistance = 99999
+            for (let Bloon of Bloons) {
+                Distance = Math.sqrt((Bloon.x - Value.x) ** 2 + (Bloon.y - Value.y) ** 2)
+                if (Distance < ClosestDistance) {
+                    ClosestDistance = Distance
+                    ClosestBloon = Bloon
+                }
+            }
+            if (ClosestDistance <= 48) {
+                Dart = sprites.create(img`
+f f 
+f f 
+`, SpriteKind.Projectile)
+                Dart.setPosition(Value.x, Value.y)
+                Dart.follow(ClosestBloon, 200)
+            }
         }
     }
 })
