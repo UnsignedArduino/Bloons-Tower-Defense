@@ -191,8 +191,29 @@ sprites.onOverlap(SpriteKind.Enemy, SpriteKind.Projectile, function (sprite, oth
 })
 controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
     if (Cursor.tileKindAt(TileDirection.Center, myTiles.tile1) || Cursor.tileKindAt(TileDirection.Center, sprites.castle.tileGrass1) || (Cursor.tileKindAt(TileDirection.Center, sprites.castle.tileGrass3) || Cursor.tileKindAt(TileDirection.Center, sprites.castle.tileGrass2))) {
+        Overlap = false
         for (let Value of Towers) {
-            Overlap = Cursor.overlapsWith(Value)
+            if (Cursor.overlapsWith(Value)) {
+                Overlap = true
+                if (info.score() >= 30) {
+                    info.changeScoreBy(-30)
+                    if (sprites.readDataBoolean(Value, "NextToUpgrade")) {
+                        if (sprites.readDataNumber(Value, "max cooldown") >= 2) {
+                            sprites.changeDataNumberBy(Value, "max cooldown", -1)
+                            sprites.setDataBoolean(Value, "NextToUpgrade", false)
+                        } else {
+                            sprites.changeDataNumberBy(Value, "visibility", 8)
+                            sprites.setDataBoolean(Value, "NextToUpgrade", true)
+                        }
+                    } else {
+                        sprites.changeDataNumberBy(Value, "visibility", 8)
+                        sprites.setDataBoolean(Value, "NextToUpgrade", true)
+                    }
+                    Value.startEffect(effects.smiles, 1000)
+                } else {
+                    Cursor.say("Not enough money!", 1000)
+                }
+            }
         }
         if (!(Overlap)) {
             if (info.score() >= 50) {
@@ -218,8 +239,12 @@ c c c c c d d d e e f c . f e f
                 Towers.push(LastTower)
                 LastTower.setPosition(Cursor.x, Cursor.y)
                 LastTower.z = 0
+                sprites.setDataNumber(LastTower, "max cooldown", 5)
+                sprites.setDataNumber(LastTower, "cooldown", sprites.readDataNumber(LastTower, "max cooldown"))
+                sprites.setDataNumber(LastTower, "visibility", 48)
+                sprites.setDataBoolean(LastTower, "NextToUpgrade", true)
             } else {
-                Cursor.say("No money left!", 1000)
+                Cursor.say("Not enough money!", 1000)
             }
         }
     } else {
@@ -265,15 +290,26 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Tower, function (sprite, otherSp
         Towers.removeAt(Towers.indexOf(otherSprite)).destroy()
         info.changeScoreBy(30)
     }
+    timer.throttle("display upgrade", 3000, function () {
+        if (sprites.readDataBoolean(otherSprite, "NextToUpgrade")) {
+            if (sprites.readDataNumber(otherSprite, "max cooldown") >= 2) {
+                otherSprite.say("Next upgrade: Cool down --> " + (sprites.readDataNumber(otherSprite, "max cooldown") - 1) * 100 + " ms for $30", 3000)
+            } else {
+                otherSprite.say("Next upgrade: Visibility --> " + (sprites.readDataNumber(otherSprite, "visibility") + 8) + " pixels for $30", 3000)
+            }
+        } else {
+            otherSprite.say("Next upgrade: Visibility --> " + (sprites.readDataNumber(otherSprite, "visibility") + 8) + " pixels for $30", 3000)
+        }
+    })
 })
 sprites.onOverlap(SpriteKind.Enemy, SpriteKind.DirectionLeft, function (sprite, otherSprite) {
     sprite.setVelocity(15 * sprites.readDataNumber(sprite, "wave spawned on") * -1, 0)
 })
+let LastBloon: Sprite = null
 let Dart: Sprite = null
 let ClosestBloon: Sprite = null
 let Distance = 0
 let ClosestDistance = 0
-let LastBloon: Sprite = null
 let LastTower: Sprite = null
 let Overlap = false
 let Dump: Sprite = null
@@ -557,6 +593,33 @@ Waiting = true
 Wave = 1
 BloonsSpawned = 0
 info.startCountdown(15)
+game.onUpdateInterval(100, function () {
+    for (let Value of Towers) {
+        if (Bloons.length > 0) {
+            ClosestDistance = 99999
+            for (let Bloon of Bloons) {
+                Distance = Math.sqrt((Bloon.x - Value.x) ** 2 + (Bloon.y - Value.y) ** 2)
+                if (Distance < ClosestDistance) {
+                    ClosestDistance = Distance
+                    ClosestBloon = Bloon
+                }
+            }
+            if (ClosestDistance <= sprites.readDataNumber(Value, "visibility")) {
+                if (sprites.readDataNumber(Value, "cooldown") <= 0) {
+                    Dart = sprites.create(img`
+f f 
+f f 
+`, SpriteKind.Projectile)
+                    Dart.setPosition(Value.x, Value.y)
+                    Dart.follow(ClosestBloon, 200)
+                    sprites.setDataNumber(Value, "cooldown", sprites.readDataNumber(Value, "max cooldown"))
+                } else {
+                    sprites.changeDataNumberBy(Value, "cooldown", -1)
+                }
+            }
+        }
+    }
+})
 game.onUpdate(function () {
     if (!(Waiting)) {
         timer.throttle("spawn bloon", 1000 - (Wave - 1) * 25, function () {
@@ -590,32 +653,8 @@ game.onUpdate(function () {
             console.logValue("bloons spawned", BloonsSpawned)
         })
     }
-})
-game.onUpdateInterval(500, function () {
-    for (let Value of Towers) {
-        if (Bloons.length > 0) {
-            ClosestDistance = 99999
-            for (let Bloon of Bloons) {
-                Distance = Math.sqrt((Bloon.x - Value.x) ** 2 + (Bloon.y - Value.y) ** 2)
-                if (Distance < ClosestDistance) {
-                    ClosestDistance = Distance
-                    ClosestBloon = Bloon
-                }
-            }
-            if (ClosestDistance <= 48) {
-                Dart = sprites.create(img`
-f f 
-f f 
-`, SpriteKind.Projectile)
-                Dart.setPosition(Value.x, Value.y)
-                Dart.follow(ClosestBloon, 200)
-            }
-        }
-    }
+    OnScreenNarrator.y = scene.screenHeight() / 2 + scene.cameraTop()
 })
 game.onUpdateInterval(5000, function () {
     info.changeScoreBy(25)
-})
-forever(function () {
-    OnScreenNarrator.y = scene.screenHeight() / 2 + scene.cameraTop()
 })
