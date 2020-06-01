@@ -197,16 +197,34 @@ controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
                 Overlap = true
                 if (info.score() >= 30) {
                     info.changeScoreBy(-30)
+                    Value.setImage(img`
+. . . . f f f f f . . . . . . . 
+. . . f e e e e e f . . . . . . 
+. . f d d d d e e e f . . . . . 
+. 8 8 f 8 8 f 8 8 8 8 f . . . . 
+. 8 8 f 8 8 f 8 8 8 d d f . . . 
+c d e e d d d d e e b d c . . . 
+c d d d d c d d e e b d c . f f 
+c c c c c d d d e e f c . f e f 
+. f d d d d d e e 8 8 . . f e f 
+. . f f f f f 8 8 8 8 8 . f e f 
+. . . . 8 5 2 5 8 8 8 8 8 f e f 
+. . . 8 8 2 2 2 8 8 8 8 8 8 f . 
+. . . 8 8 5 2 5 8 8 8 8 8 8 . . 
+. . . f d b 8 d b 8 8 8 8 . . . 
+. . . f d d c d d b b d f . . . 
+. . . . f f f f f f f f f . . . 
+`)
                     if (sprites.readDataBoolean(Value, "NextToUpgrade")) {
                         if (sprites.readDataNumber(Value, "max cooldown") >= 2) {
                             sprites.changeDataNumberBy(Value, "max cooldown", -1)
                             sprites.setDataBoolean(Value, "NextToUpgrade", false)
                         } else {
-                            sprites.changeDataNumberBy(Value, "visibility", 8)
+                            sprites.changeDataNumberBy(Value, "visibility", 1)
                             sprites.setDataBoolean(Value, "NextToUpgrade", true)
                         }
                     } else {
-                        sprites.changeDataNumberBy(Value, "visibility", 8)
+                        sprites.changeDataNumberBy(Value, "visibility", 1)
                         sprites.setDataBoolean(Value, "NextToUpgrade", true)
                     }
                     Value.startEffect(effects.smiles, 1000)
@@ -241,7 +259,7 @@ c c c c c d d d e e f c . f e f
                 LastTower.z = 0
                 sprites.setDataNumber(LastTower, "max cooldown", 5)
                 sprites.setDataNumber(LastTower, "cooldown", sprites.readDataNumber(LastTower, "max cooldown"))
-                sprites.setDataNumber(LastTower, "visibility", 48)
+                sprites.setDataNumber(LastTower, "visibility", 3)
                 sprites.setDataBoolean(LastTower, "NextToUpgrade", true)
             } else {
                 Cursor.say("Not enough money!", 1000)
@@ -254,11 +272,12 @@ c c c c c d d d e e f c . f e f
 scene.onHitWall(SpriteKind.Projectile, function (sprite) {
     sprite.destroy()
 })
-sprites.onOverlap(SpriteKind.Enemy, SpriteKind.DirectionDown, function (sprite, otherSprite) {
-    sprite.setVelocity(0, 15 * sprites.readDataNumber(sprite, "wave spawned on"))
-})
-sprites.onOverlap(SpriteKind.Enemy, SpriteKind.DirectionRight, function (sprite, otherSprite) {
-    sprite.setVelocity(15 * sprites.readDataNumber(sprite, "wave spawned on"), 0)
+scene.onPathCompletion(SpriteKind.Enemy, function (sprite, location) {
+    sprite.destroy()
+    if (false) {
+        info.changeLifeBy(-2)
+    }
+    scene.cameraShake(4, 500)
 })
 info.onCountdownEnd(function () {
     if (Waiting) {
@@ -278,13 +297,6 @@ info.onCountdownEnd(function () {
         })
     }
 })
-sprites.onOverlap(SpriteKind.Enemy, SpriteKind.End, function (sprite, otherSprite) {
-    sprite.destroy()
-    if (true) {
-        info.changeLifeBy(-2)
-    }
-    scene.cameraShake(4, 500)
-})
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Tower, function (sprite, otherSprite) {
     if (controller.B.isPressed()) {
         Towers.removeAt(Towers.indexOf(otherSprite)).destroy()
@@ -295,21 +307,19 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Tower, function (sprite, otherSp
             if (sprites.readDataNumber(otherSprite, "max cooldown") >= 2) {
                 otherSprite.say("Next upgrade: Cool down --> " + (sprites.readDataNumber(otherSprite, "max cooldown") - 1) * 100 + " ms for $30", 3000)
             } else {
-                otherSprite.say("Next upgrade: Visibility --> " + (sprites.readDataNumber(otherSprite, "visibility") + 8) + " pixels for $30", 3000)
+                otherSprite.say("Next upgrade: Visibility --> " + (sprites.readDataNumber(otherSprite, "visibility") + 8) + " tiles for $30", 3000)
             }
         } else {
-            otherSprite.say("Next upgrade: Visibility --> " + (sprites.readDataNumber(otherSprite, "visibility") + 8) + " pixels for $30", 3000)
+            otherSprite.say("Next upgrade: Visibility --> " + (sprites.readDataNumber(otherSprite, "visibility") + 8) + " tiles for $30", 3000)
         }
     })
 })
-sprites.onOverlap(SpriteKind.Enemy, SpriteKind.DirectionLeft, function (sprite, otherSprite) {
-    sprite.setVelocity(15 * sprites.readDataNumber(sprite, "wave spawned on") * -1, 0)
-})
 let LastBloon: Sprite = null
 let Dart: Sprite = null
-let ClosestBloon: Sprite = null
+let ClosestToEndBloon: Sprite = null
+let ClosestToEndDistance = 0
 let Distance = 0
-let ClosestDistance = 0
+let PossibleBloons: Sprite[] = []
 let LastTower: Sprite = null
 let Overlap = false
 let Dump: Sprite = null
@@ -347,204 +357,31 @@ OnScreenNarrator = sprites.create(img`
 OnScreenNarrator.setFlag(SpriteFlag.RelativeToCamera, true)
 Towers = sprites.allOfKind(SpriteKind.Tower)
 Bloons = sprites.allOfKind(SpriteKind.Enemy)
-let Downs = sprites.allOfKind(SpriteKind.DirectionDown)
-let Lefts = sprites.allOfKind(SpriteKind.DirectionLeft)
-let Rights = sprites.allOfKind(SpriteKind.DirectionRight)
-Rights.push(sprites.create(img`
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-`, SpriteKind.DirectionRight))
-Rights[0].setPosition(36, 42)
-Downs.push(sprites.create(img`
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-`, SpriteKind.DirectionDown))
-Downs[0].setPosition(232, 36)
-Lefts.push(sprites.create(img`
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-`, SpriteKind.DirectionLeft))
-Lefts[0].setPosition(225, 88)
-Downs.push(sprites.create(img`
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-`, SpriteKind.DirectionDown))
-Downs[1].setPosition(24, 88)
-Rights.push(sprites.create(img`
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-`, SpriteKind.DirectionRight))
-Rights[1].setPosition(36, 188)
-Downs.push(sprites.create(img`
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-`, SpriteKind.DirectionDown))
-Downs[2].setPosition(232, 180)
-Lefts.push(sprites.create(img`
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
-`, SpriteKind.DirectionLeft))
-Lefts[1].setPosition(225, 230)
-for (let Value of Downs) {
-    Value.setFlag(SpriteFlag.Invisible, true)
-}
-for (let Value of Lefts) {
-    Value.setFlag(SpriteFlag.Invisible, true)
-}
-for (let Value of Rights) {
-    Value.setFlag(SpriteFlag.Invisible, true)
-}
-let EndOfMap = sprites.create(img`
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-3 3 3 3 3 3 3 3 
-`, SpriteKind.End)
-EndOfMap.setPosition(4, 227)
-EndOfMap.setFlag(SpriteFlag.Invisible, true)
 scene.setBackgroundColor(7)
+tiles.setTilemap(tiles.createTilemap(
+            hex`1000100012050401011401011301011201010101010502030303030303030303030308140106070707070707070707070702040113010101011201140101140101050401010a03030303030303030303030204120105020707070707070707070707090112050414010101130101010112010101010504010d0e0e0e0e0e0e0e0e0e0f13010504010c111111111111111111100114050413010101010101011401010112010502030303030303030303030308010106070707070707070707070702041401120101140101120101010113050413030303030303030303030303030204010707070707070707070707070707090101140101121401010101130101010112`,
+            img`
+2 . . 2 2 2 2 2 2 2 2 2 2 2 2 2 
+2 . . . . . . . . . . . . . . 2 
+2 . . . . . . . . . . . . . . 2 
+2 2 2 2 2 2 2 2 2 2 2 2 2 . . 2 
+2 . . . . . . . . . . . . . . 2 
+2 . . . . . . . . . . . . . . 2 
+2 . . 2 2 2 2 2 2 2 2 2 2 2 2 2 
+2 . . 2 2 2 2 2 2 2 2 2 2 2 2 2 
+2 . . 2 2 2 2 2 2 2 2 2 2 2 2 2 
+2 . . 2 2 2 2 2 2 2 2 2 2 2 2 2 
+2 . . . . . . . . . . . . . . 2 
+2 . . . . . . . . . . . . . . 2 
+2 2 2 2 2 2 2 2 2 2 2 2 2 . . 2 
+. . . . . . . . . . . . . . . 2 
+. . . . . . . . . . . . . . . 2 
+2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
+`,
+            [myTiles.tile0,myTiles.tile1,sprites.castle.tilePath5,sprites.castle.tilePath2,sprites.castle.tilePath6,sprites.castle.tilePath4,sprites.castle.tilePath7,sprites.castle.tilePath8,sprites.castle.tilePath3,sprites.castle.tilePath9,sprites.castle.tilePath1,myTiles.tile2,myTiles.tile3,myTiles.tile4,myTiles.tile5,myTiles.tile7,myTiles.tile8,myTiles.tile9,sprites.castle.tileGrass1,sprites.castle.tileGrass3,sprites.castle.tileGrass2],
+            TileScale.Sixteen
+        ))
+let BloonPath = scene.aStar(tiles.getTileLocation(1, 0), tiles.getTileLocation(0, 14))
 tiles.setTilemap(tiles.createTilemap(
             hex`1000100012050401011401011301011201010101010502030303030303030303030308140106070707070707070707070702040113010101011201140101140101050401010a03030303030303030303030204120105020707070707070707070707090112050414010101130101010112010101010504010d0e0e0e0e0e0e0e0e0e0f13010504010c111111111111111111100114050413010101010101011401010112010502030303030303030303030308010106070707070707070707070702041401120101140101120101010113050413030303030303030303030303030204010707070707070707070707070707090101140101121401010101130101010112`,
             img`
@@ -596,22 +433,27 @@ info.startCountdown(15)
 game.onUpdateInterval(100, function () {
     for (let Value of Towers) {
         if (Bloons.length > 0) {
-            ClosestDistance = 99999
+            PossibleBloons = sprites.allOfKind(SpriteKind.Enemy)
             for (let Bloon of Bloons) {
                 Distance = Math.sqrt((Bloon.x - Value.x) ** 2 + (Bloon.y - Value.y) ** 2)
-                if (Distance < ClosestDistance) {
-                    ClosestDistance = Distance
-                    ClosestBloon = Bloon
+                if (Distance < sprites.readDataNumber(Value, "visibility")) {
+                    PossibleBloons.push(Bloon)
                 }
             }
-            if (ClosestDistance <= sprites.readDataNumber(Value, "visibility")) {
+            if (PossibleBloons.length > 0) {
                 if (sprites.readDataNumber(Value, "cooldown") <= 0) {
+                    ClosestToEndDistance = 101
+                    for (let Bloon of PossibleBloons) {
+                        if (scene.spritePercentPathCompleted(Bloon) <= ClosestToEndDistance) {
+                            ClosestToEndBloon = Bloon
+                        }
+                    }
                     Dart = sprites.create(img`
 f f 
 f f 
 `, SpriteKind.Projectile)
                     Dart.setPosition(Value.x, Value.y)
-                    Dart.follow(ClosestBloon, 200)
+                    Dart.follow(ClosestToEndBloon, 200)
                     sprites.setDataNumber(Value, "cooldown", sprites.readDataNumber(Value, "max cooldown"))
                 } else {
                     sprites.changeDataNumberBy(Value, "cooldown", -1)
@@ -646,7 +488,7 @@ game.onUpdate(function () {
                     Bloons.push(LastBloon)
                     sprites.setDataNumber(LastBloon, "wave spawned on", Math.min(Wave, 6 + 2 / 3))
                     LastBloon.setPosition(32, 0)
-                    LastBloon.setVelocity(0, 15 * sprites.readDataNumber(LastBloon, "wave spawned on"))
+                    scene.followPath(LastBloon, BloonPath, 15 * sprites.readDataNumber(LastBloon, "wave spawned on"))
                     BloonsSpawned += 1
                 })
             }
